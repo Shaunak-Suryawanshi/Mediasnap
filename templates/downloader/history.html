@@ -1,0 +1,110 @@
+{% extends 'downloader/base.html' %}
+{% load static %}
+
+{% block title %}Download History — MediaSnap{% endblock %}
+
+{% block content %}
+<section class="history-section">
+  <div class="history-header">
+    <div>
+      <h1 class="page-title">Download History</h1>
+      <p class="page-subtitle">{{ downloads.count }} total download{{ downloads.count|pluralize }}</p>
+    </div>
+    {% if downloads %}
+    <form method="post" action="{% url 'downloader:clear_history' %}" onsubmit="return confirm('Clear all history?')">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-danger btn-sm">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+        Clear All
+      </button>
+    </form>
+    {% endif %}
+  </div>
+
+  {% if downloads %}
+  <div class="history-table-wrap card">
+    <table class="history-table">
+      <thead>
+        <tr>
+          <th>Media</th>
+          <th>Platform</th>
+          <th>Type</th>
+          <th>Quality</th>
+          <th>Size</th>
+          <th>Status</th>
+          <th>Date</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for dl in downloads %}
+        <tr class="history-row" id="row-{{ dl.pk }}">
+          <td class="history-media-cell">
+            {% if dl.thumbnail %}
+            <img src="{{ dl.thumbnail }}" alt="" class="history-thumb" onerror="this.style.display='none'" />
+            {% endif %}
+            <span class="history-title" title="{{ dl.title }}">{{ dl.title|truncatechars:45|default:"—" }}</span>
+          </td>
+          <td>
+            <span class="badge badge-platform badge-{{ dl.platform }}">{{ dl.get_platform_display }}</span>
+          </td>
+          <td><span class="badge badge-type">{{ dl.get_media_type_display }}</span></td>
+          <td>{{ dl.quality|default:"—" }}</td>
+          <td>{% if dl.file_size_mb %}{{ dl.file_size_mb }} MB{% else %}—{% endif %}</td>
+          <td>
+            <span class="status-dot status-{{ dl.status }}">
+              {% if dl.status == 'success' %}✓{% elif dl.status == 'failed' %}✗{% else %}…{% endif %}
+              {{ dl.get_status_display }}
+            </span>
+          </td>
+          <td class="history-date">{{ dl.created_at|date:"d M, H:i" }}</td>
+          <td class="history-actions">
+            {% if dl.status == 'success' and dl.file_path %}
+            <a href="{% url 'downloader:serve_file' dl.pk %}" class="action-btn action-btn--dl" title="Download">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            </a>
+            {% endif %}
+            <button class="action-btn action-btn--del" title="Delete" onclick="deleteItem({{ dl.pk }})">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            </button>
+          </td>
+        </tr>
+        {% if dl.error_message %}
+        <tr class="error-row" id="err-{{ dl.pk }}">
+          <td colspan="8">
+            <span class="error-msg">⚠ {{ dl.error_message|truncatechars:200 }}</span>
+          </td>
+        </tr>
+        {% endif %}
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% else %}
+  <div class="empty-state card">
+    <div class="empty-icon">📭</div>
+    <h2>No downloads yet</h2>
+    <p>Go back and download some content!</p>
+    <a href="{% url 'downloader:home' %}" class="btn btn-primary">Start Downloading</a>
+  </div>
+  {% endif %}
+</section>
+
+<script>
+const CSRF = '{{ csrf_token }}';
+function deleteItem(pk) {
+  if (!confirm('Delete this record?')) return;
+  fetch(`/history/delete/${pk}/`, {
+    method: 'POST',
+    headers: { 'X-CSRFToken': CSRF, 'X-Requested-With': 'XMLHttpRequest' },
+  }).then(r => r.json()).then(data => {
+    if (data.success) {
+      document.getElementById('row-' + pk)?.remove();
+      const errRow = document.getElementById('err-' + pk);
+      if (errRow) errRow.remove();
+    }
+  });
+}
+</script>
+{% endblock %}

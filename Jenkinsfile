@@ -1,20 +1,16 @@
 pipeline {
     agent any
-
     environment {
-        IMAGE_NAME = "shaunak30/myapp"  
+        IMAGE_NAME = "shaunak30/myapp"
         CONTAINER_NAME = "myapp-container"
     }
-
     stages {
-
         stage('Pull Image from Docker Hub') {
             steps {
                 echo "Pulling the latest image..."
                 sh 'docker pull $IMAGE_NAME'
             }
         }
-
         stage('Stop Old Container') {
             steps {
                 echo "Stopping existing container if running..."
@@ -24,20 +20,22 @@ pipeline {
                 '''
             }
         }
-
-        stage('Free Port 8000 (IMPORTANT FIX)') {
+        stage('Free Port 8000') {
             steps {
                 echo "Freeing port 8000 if occupied..."
                 sh '''
-                PORT=$(lsof -t -i:8000)
-                if [ -n "$PORT" ]; then
-                    echo "Port 8000 is in use. Killing process $PORT"
-                    kill -9 $PORT
+                if command -v lsof > /dev/null 2>&1; then
+                    PORT=$(lsof -t -i:8000 || true)
+                    if [ -n "$PORT" ]; then
+                        echo "Killing process $PORT on port 8000"
+                        kill -9 $PORT || true
+                    fi
+                else
+                    fuser -k 8000/tcp || true
                 fi
                 '''
             }
         }
-
         stage('Run New Container with MongoDB Atlas') {
             steps {
                 echo "Starting new container with MongoDB Atlas..."
@@ -50,18 +48,16 @@ pipeline {
                 }
             }
         }
-
         stage('Run Django Migrations') {
             steps {
                 echo "Running Django migrations inside the container..."
                 sh '''
-                docker exec $CONTAINER_NAME python manage.py makemigrations
+                sleep 5
                 docker exec $CONTAINER_NAME python manage.py migrate
                 '''
             }
         }
     }
-
     post {
         success {
             echo "Deployment and migrations completed successfully!"

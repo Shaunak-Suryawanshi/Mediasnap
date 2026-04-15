@@ -79,11 +79,13 @@ DATABASES = {
         'ENGINE': 'djongo',
         'NAME': 'mediasnap',
         'CLIENT': {
-            'host': os.environ.get('MONGO_URI', 'mongodb+srv://shaunak436:emmanuel123@cluster0.igrxhvt.mongodb.net/?appName=Cluster0'),
+            'host': os.environ.get(
+                'MONGO_URI',
+                'mongodb+srv://shaunak436:emmanuel123@cluster0.igrxhvt.mongodb.net/mediasnap?retryWrites=true&w=majority'
+            ),
         }
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators

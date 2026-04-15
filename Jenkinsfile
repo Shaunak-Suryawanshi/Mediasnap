@@ -34,13 +34,27 @@ pipeline {
             }
         }
 
-        stage('Run New Container') {
+        stage('Run New Container with MongoDB Atlas') {
             steps {
-                sh '''
-                echo "Starting new container..."
-                docker run -d --restart always -p 8000:8000 --name $CONTAINER_NAME $IMAGE_NAME
-                '''
+                // Inject MongoDB URI securely from Jenkins Credentials
+                withCredentials([string(credentialsId: 'mongo-uri', variable: 'MONGO_URI')]) {
+                    sh '''
+                    echo "Starting new container with MongoDB Atlas connection..."
+                    docker run -d --restart always -p 8000:8000 \
+                      -e MONGO_URI="$MONGO_URI" \
+                      --name $CONTAINER_NAME $IMAGE_NAME
+                    '''
+                }
             }
+        }
+    }
+
+    post {
+        success {
+            echo "Deployment completed successfully!"
+        }
+        failure {
+            echo "Deployment failed. Check logs for details."
         }
     }
 }

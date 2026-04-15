@@ -75,8 +75,11 @@ WSGI_APPLICATION = 'myproject.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'djongo',
+        'NAME': 'mediasnap',
+        'CLIENT': {
+            'host': 'mongodb+srv://shaunak436:<db_password>@cluster0.igrxhvt.mongodb.net/?appName=Cluster0',
+        }
     }
 }
 

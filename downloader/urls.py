@@ -9,6 +9,6 @@ urlpatterns = [
     path('download/', views.start_download, name='download'),
     path('history/', views.history, name='history'),
     path('history/clear/', views.clear_history, name='clear_history'),
-    path('history/delete/<int:pk>/', views.delete_history_item, name='delete_history'),
-    path('serve/<int:pk>/', views.serve_file, name='serve_file'),
+    path('history/delete/<str:pk>/', views.delete_history_item, name='delete_history'),
+    path('serve/<str:pk>/', views.serve_file, name='serve_file'),
 ]

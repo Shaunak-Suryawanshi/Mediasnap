@@ -76,16 +76,16 @@ WSGI_APPLICATION = 'myproject.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django_mongodb_backend',
-        'NAME': 'mediasnap',
-        'CLIENT': {
-            'host': os.environ.get(
-                'MONGO_URI',
-                'mongodb+srv://shaunak436:emmanuel123@cluster0.igrxhvt.mongodb.net/mediasnap?retryWrites=true&w=majority'
-            ),
-        }
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+
+# MongoDB connection via pymongo
+from pymongo import MongoClient
+MONGO_URI = os.environ.get('MONGO_URI', 'mongodb+srv://shaunak436:emmanuel123@cluster0.igrxhvt.mongodb.net/mediasnap?retryWrites=true&w=majority')
+mongo_client = MongoClient(MONGO_URI)
+mongo_db = mongo_client['mediasnap']
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators

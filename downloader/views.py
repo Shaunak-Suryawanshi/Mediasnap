@@ -99,7 +99,7 @@ def start_download(request):
         record.save()
         return JsonResponse({
             'success': True,
-            'id': record.pk,
+            'id': str(record.pk),
             'title': record.title,
             'thumbnail': record.thumbnail,
             'duration': record.duration,

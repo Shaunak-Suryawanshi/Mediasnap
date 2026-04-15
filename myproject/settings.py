@@ -76,7 +76,7 @@ WSGI_APPLICATION = 'myproject.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'djongo',
+        'ENGINE': 'django_mongodb_backend',
         'NAME': 'mediasnap',
         'CLIENT': {
             'host': os.environ.get(

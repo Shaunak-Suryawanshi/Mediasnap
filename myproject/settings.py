@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -78,7 +79,7 @@ DATABASES = {
         'ENGINE': 'djongo',
         'NAME': 'mediasnap',
         'CLIENT': {
-            'host': 'mongodb+srv://shaunak436:<db_password>@cluster0.igrxhvt.mongodb.net/?appName=Cluster0',
+            'host': os.environ.get('MONGO_URI', 'mongodb+srv://shaunak436:emmanuel123@cluster0.igrxhvt.mongodb.net/?appName=Cluster0'),
         }
     }
 }

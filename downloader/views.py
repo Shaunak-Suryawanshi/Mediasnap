@@ -14,7 +14,12 @@ from .utils import detect_platform, detect_media_type, fetch_media_info, downloa
 @ensure_csrf_cookie
 def home(request):
     """Home page — main downloader interface."""
-    recent = DownloadHistory.objects.filter(status='success').order_by('-created_at')[:6]
+    if not request.session.session_key:
+        request.session.create()
+    recent = DownloadHistory.objects.filter(
+        session_key=request.session.session_key, 
+        status='success'
+    ).order_by('-created_at')[:6]
     return render(request, 'downloader/home.html', {'recent_downloads': recent})
 
 
@@ -57,6 +62,16 @@ def start_download(request):
     if not url:
         return JsonResponse({'error': 'Please provide a URL.'}, status=400)
 
+    if not request.session.session_key:
+        request.session.create()
+    session_key = request.session.session_key
+
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded_for:
+        ip_address = x_forwarded_for.split(',')[0]
+    else:
+        ip_address = request.META.get('REMOTE_ADDR')
+
     platform = detect_platform(url)
     media_type = detect_media_type(url, platform)
 
@@ -67,6 +82,8 @@ def start_download(request):
         media_type=media_type,
         status='pending',
         quality=quality,
+        ip_address=ip_address,
+        session_key=session_key,
     )
 
     result = download_media(url, quality=quality, download_id=record.pk)
@@ -98,17 +115,20 @@ def start_download(request):
 
 def history(request):
     """Download history page."""
-    downloads = DownloadHistory.objects.all().order_by('-created_at')
+    if not request.session.session_key:
+        request.session.create()
+    downloads = DownloadHistory.objects.filter(session_key=request.session.session_key).order_by('-created_at')
     return render(request, 'downloader/history.html', {'downloads': downloads})
 
 
 @require_POST
 def clear_history(request):
     """Delete all history records and their files."""
-    items = DownloadHistory.objects.all()
-    for item in items:
-        _delete_file(item)
-    items.delete()
+    if request.session.session_key:
+        items = DownloadHistory.objects.filter(session_key=request.session.session_key)
+        for item in items:
+            _delete_file(item)
+        items.delete()
     messages.success(request, 'History cleared successfully.')
     return redirect('downloader:history')
 
@@ -116,7 +136,9 @@ def clear_history(request):
 @require_http_methods(['POST', 'DELETE'])
 def delete_history_item(request, pk):
     """Delete a single history record and its file."""
-    item = get_object_or_404(DownloadHistory, pk=pk)
+    if not request.session.session_key:
+        raise Http404("Not found")
+    item = get_object_or_404(DownloadHistory, pk=pk, session_key=request.session.session_key)
     _delete_file(item)
     item.delete()
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':

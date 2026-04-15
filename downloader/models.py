@@ -32,6 +32,8 @@ class DownloadHistory(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     duration = models.CharField(max_length=20, blank=True)
     quality = models.CharField(max_length=20, blank=True)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    session_key = models.CharField(max_length=40, null=True, blank=True)
 
     class Meta:
         ordering = ['-created_at']

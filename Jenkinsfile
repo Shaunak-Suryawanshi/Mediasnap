@@ -57,6 +57,16 @@ pipeline {
                 '''
             }
         }
+        stage('Initialize MongoDB') {
+            steps {
+                echo "Initializing MongoDB Atlas database..."
+                withCredentials([string(credentialsId: 'mongo-uri', variable: 'MONGO_URI')]) {
+                    sh '''
+                    docker exec -e MONGO_URI="$MONGO_URI" $CONTAINER_NAME python init_mongodb.py
+                    '''
+                }
+            }
+        }
     }
     post {
         success {
